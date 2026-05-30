@@ -1,0 +1,68 @@
+@startuml astroll_old_classes
+set namespaceSeparator none
+
+class BoardElement {
+  room_id : str
+  created_by : int
+  position : Point
+  can_edit(user_id: int) : bool
+  to_snapshot() : dict
+}
+class TokenElement
+class ImageElement
+class TextElement
+class ShapeElement
+class DrawingElement
+class BoardElementFactory {
+  create_element(payload: BoardActionPayload) : BoardElement
+}
+class BoardElementFactoryRegistry {
+  get_factory(element_type: str) : BoardElementFactory
+  register(element_type: str, factory: BoardElementFactory) : void
+}
+class BoardUpdateBuilder {
+  build(payload: BoardActionPayload) : BoardElement
+}
+class BoardSnapshotProvider {
+  load_snapshot(board_id: int) : BoardSnapshot
+  save_snapshot(board_id: int, snapshot: BoardSnapshot) : void
+}
+class ExcalidrawSnapshotAdapter
+class GameSessionCommand {
+  execute() : SessionEvent
+}
+class AddBoardElementCommand
+class MoveTokenCommand
+class RollDiceCommand
+class SetReadonlyCommand
+class KickPlayerCommand
+class SaveBoardSnapshotCommand
+class GameSessionCommandInvoker {
+  execute(command: GameSessionCommand) : SessionEvent
+}
+class SessionEventLog
+class RealtimeEventPublisher
+class GameSession
+class Room
+class Character
+
+TokenElement --|> BoardElement
+ImageElement --|> BoardElement
+TextElement --|> BoardElement
+ShapeElement --|> BoardElement
+DrawingElement --|> BoardElement
+BoardElementFactoryRegistry --> BoardElementFactory
+BoardUpdateBuilder --> BoardElementFactoryRegistry
+ExcalidrawSnapshotAdapter --|> BoardSnapshotProvider
+AddBoardElementCommand --|> GameSessionCommand
+MoveTokenCommand --|> GameSessionCommand
+RollDiceCommand --|> GameSessionCommand
+SetReadonlyCommand --|> GameSessionCommand
+KickPlayerCommand --|> GameSessionCommand
+SaveBoardSnapshotCommand --|> GameSessionCommand
+GameSessionCommandInvoker --> SessionEventLog
+GameSessionCommandInvoker --> RealtimeEventPublisher
+GameSessionCommand --> GameSession
+GameSession --> Room
+GameSession --> Character
+@enduml

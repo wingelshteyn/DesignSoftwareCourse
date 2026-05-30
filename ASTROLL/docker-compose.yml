@@ -1,0 +1,29 @@
+services:
+  api-gateway:
+    image: nginx:alpine
+    depends_on:
+      - auth-accounts
+      - session
+      - board
+  auth-accounts:
+    build: ./services/auth_accounts
+  social:
+    build: ./services/social
+  characters:
+    build: ./services/characters
+  session:
+    build: ./services/session
+  board:
+    build: ./services/board
+  dice:
+    build: ./services/dice
+  administration:
+    build: ./services/administration
+  realtime-worker:
+    build: ./services/realtime_worker
+  postgres:
+    image: postgres:16-alpine
+  redis:
+    image: redis:7-alpine
+  object-storage:
+    image: minio/minio
