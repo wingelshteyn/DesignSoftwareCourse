@@ -1,56 +1,80 @@
-# Диаграмма 19. 4+1: представление уровня разработки
+# Диаграмма 19. 4+1: представление уровня разработки (рисунок 19)
 
-## Промпт
-Создай development view для ASTROLL после реструктуризации. Покажи репозитории/пакеты сервисов: frontend, api-gateway, services/auth, services/characters, services/session, services/board, services/dice, services/social, services/admin, workers/board-worker, shared-contracts. В каждом backend-сервисе слои api, application/service, domain/models, repository, tests, Dockerfile, ci.yml. shared-contracts содержит DTO и события.
+## Назначение
+Рисунок 19 отчёта ПР8. **Development View** — структура репозитория и слоёв сервисов.
 
-## PlantUML
+## Эталон (что должно получиться)
+- **Session Service** (шаблон) — внутри 4 блока: **api**, **service**, **repository**, **models**.
+- **Board Service** — **api**, **app** (или service).
+- **shared-contracts** снизу по центру: **DTOs**, **Interfaces**.
+- Прямоугольники с тенью, layout треугольник как в MDT.
+- Путь: `ASTROLL/services/*`, `ASTROLL/shared-contracts/`.
+
+## Промпт для генерации
+```
+Нарисуй Development View (4+1) для ASTROLL, стиль рис. 19 MDT.
+
+Три блока:
+
+1. Session Service (общий шаблон сервисов) — большой прямоугольник с подписью «(общий шаблон сервисов)», внутри 4 ячейки:
+   - api (FastAPI/uvicorn endpoints)
+   - service (commands, policies)
+   - repository (persistence)
+   - models (domain)
+
+2. Board Service — прямоугольник с api + service (excalidraw_adapter, board_elements)
+
+3. shared-contracts — внизу по центру, внутри:
+   - DTOs (UserRef, BoardSnapshotDTO, SessionEventDTO, DiceRollDTO)
+   - Interfaces (контракты между сервисами)
+
+Связи: Session Service и Board Service зависят от shared-contracts (стрелки вниз).
+
+Также упомянуть в промпте: у каждого сервиса Dockerfile, ci.yml, requirements.txt, tests/.
+```
+
+## PlantUML (готовая реализация)
 ```plantuml
 @startuml
-skinparam componentStyle rectangle
-left to right direction
+skinparam rectangle {
+  BackgroundColor white
+  BorderColor black
+  shadowing true
+}
+skinparam packageStyle rectangle
 
-package "frontend\nReact" as Frontend
-package "api-gateway\nNginx config" as Gateway
-
-package "services/auth" as Auth {
-  component api_auth as "api"
-  component app_auth as "application"
-  component domain_auth as "domain/models"
-  component repo_auth as "repository"
+rectangle "Session Service\n(общий шаблон сервисов)" as Session {
+  rectangle "api" as s_api
+  rectangle "service" as s_svc
+  rectangle "repository" as s_repo
+  rectangle "models" as s_mod
 }
 
-package "services/session" as Session {
-  component api_session as "api"
-  component app_session as "application"
-  component domain_session as "domain/models"
-  component repo_session as "repository"
+rectangle "Board Service" as Board {
+  rectangle "api" as b_api
+  rectangle "service\n(board_elements,\nexcalidraw_adapter)" as b_svc
 }
 
-package "services/characters" as Characters
-package "services/board" as Board
-package "services/dice" as Dice
-package "services/social" as Social
-package "services/admin" as Admin
-package "workers/board-worker" as Worker
-
-package "shared-contracts" as Contracts {
-  component DTOs
-  component "Domain Events" as Events
-  component "API Schemas" as Schemas
+rectangle "shared-contracts" as Contracts {
+  rectangle "DTOs\nUserRef, BoardSnapshotDTO,\nSessionEventDTO, DiceRollDTO" as DTOs
+  rectangle "Interfaces\nконтракты между сервисами" as IF
 }
 
-Frontend --> Contracts
-Gateway --> Auth
-Gateway --> Session
-Gateway --> Characters
-Gateway --> Board
-Gateway --> Dice
-Session --> Contracts
-Characters --> Contracts
-Board --> Contracts
-Dice --> Contracts
-Social --> Contracts
-Admin --> Contracts
-Worker --> Contracts
+Session -[hidden]left- Board
+Session -[hidden]down- Contracts
+Board -[hidden]down- Contracts
+
+Session --> Contracts : import DTOs
+Board --> Contracts : import DTOs
+
+note bottom of Session
+  ASTROLL/services/session/
+  + Dockerfile, ci.yml, tests/
+end note
+
+note bottom of Contracts
+  ASTROLL/shared-contracts/python/
+  astroll_shared_contracts/contracts.py
+end note
 @enduml
 ```

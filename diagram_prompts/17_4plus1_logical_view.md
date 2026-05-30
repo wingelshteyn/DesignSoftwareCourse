@@ -1,44 +1,94 @@
-# Диаграмма 17. 4+1: логическое представление
+# Диаграмма 17. 4+1: логическое представление (рисунок 17)
 
-## Промпт
-Создай логическое представление архитектуры ASTROLL после реструктуризации. Покажи основные доменные сервисы и сущности: Auth & Accounts Service, Character Service, Session Service, Board Service, Dice Service. Сущности: User, Character, Room, RoomMember, BoardSnapshot, BoardElement, DiceRollEntry, SessionEvent. Связи: пользователь владеет персонажами, комната содержит участников, сессия управляет доской и событиями, броски связаны с персонажем и комнатой.
+## Назначение
+Рисунок 17 отчёта ПР8. **Логическое представление** — облачная DDD-диаграмма связей сущностей и сервисов (не UML class diagram).
 
-## PlantUML
+## Эталон (что должно получиться)
+- **Облачные формы** (cloud) с **пунктирной границей**.
+- Узлы-сущности: SessionEvent, BoardSnapshot, DiceRoll, RoomRef, CharacterRef и т.д.
+- Узлы-сервисы: Session Service, Board Service, Auth Service...
+- Связи с маркерами **○** (open circle) и **●** (filled circle) как в MDT.
+- Стиль: белый фон, чёрный текст, layout сверху вниз.
+
+## Промпт для генерации
+```
+Нарисуй Logical View (4+1) для ASTROLL после реструктуризации, стиль рис. 17 MDT.
+
+НЕ UML class diagram. Используй cloud-узлы с пунктирной границей.
+
+Сущности (cloud):
+- SessionEvent — room_id, event_type, payload
+- BoardSnapshot — board_id, version, elements
+- BoardElement — element_id, type
+- DiceRoll — room_id, formula, total
+- RoomRef — room_id, host_id
+- CharacterRef — character_id, owner_id
+- UserRef — user_id, nickname
+
+Сервисы (cloud, крупнее):
+- Session Service
+- Board Service
+- Character Service
+- Dice Service
+- Auth & Accounts Service
+- Realtime Worker
+
+Связи (со маркерами):
+- Session Service ○-- SessionEvent (создаёт)
+- Session Service ○-- RoomRef (управляет)
+- Session Service ○-- CharacterRef (использует токены)
+- Board Service ●-- BoardSnapshot (владеет)
+- BoardSnapshot ●-- BoardElement (содержит)
+- Dice Service ●-- DiceRoll
+- Session Service ○-- DiceRoll (публикует)
+- Character Service ●-- CharacterRef
+- Auth Service ●-- UserRef
+- Realtime Worker ○-- SessionEvent (рассылает)
+
+Layout: сервисы в центре, сущности вокруг, стрелки с подписями.
+```
+
+## PlantUML (готовая реализация)
 ```plantuml
 @startuml
-skinparam classAttributeIconSize 0
+skinparam cloud {
+  BackgroundColor white
+  BorderColor black
+  BorderStyle dashed
+  shadowing true
+}
+skinparam arrow Color black
 
-class User { +id: int; +login: str; +nickname: str }
-class Character { +id: int; +owner_id: int; +name: str; +sheet_data: dict }
-class Room { +id: str; +host_id: int; +title: str }
-class RoomMember { +room_id: str; +user_id: int; +readonly: bool }
-class BoardSnapshot { +id: int; +room_id: str; +version: int; +snapshot: dict }
-abstract class BoardElement { +id: str; +type: str; +position: Point }
-class TokenElement { +character_id: int }
-class ImageElement { +url: str }
-class DiceRollEntry { +room_id: str; +character_id: int; +formula: str; +total: int }
-class SessionEvent { +room_id: str; +type: str; +payload: dict }
+cloud "Session Service" as SS
+cloud "Board Service" as BS
+cloud "Character Service" as CS
+cloud "Dice Service" as DS
+cloud "Auth & Accounts Service" as AS
+cloud "Realtime Worker" as RW
 
-class AuthAccountsService { +authenticate(login: str, password: str): Token }
-class CharacterService { +get_sheet(character_id: int): Character }
-class SessionService { +execute(command: GameSessionCommand): SessionEvent }
-class BoardService { +save_snapshot(snapshot: BoardSnapshot): void }
-class DiceService { +roll(character_id: int, formula: str): DiceRollEntry }
+cloud "SessionEvent\nroom_id, event_type,\npayload" as SE
+cloud "BoardSnapshot\nboard_id, version" as Snap
+cloud "BoardElement\nelement_id, type" as BE
+cloud "DiceRoll\nformula, total" as DR
+cloud "RoomRef\nroom_id, host_id" as RR
+cloud "CharacterRef\ncharacter_id, owner_id" as CR
+cloud "UserRef\nuser_id, nickname" as UR
 
-User "1" -- "many" Character
-Room "1" -- "many" RoomMember
-User "1" -- "many" RoomMember
-Room "1" -- "many" BoardSnapshot
-BoardSnapshot "1" -- "many" BoardElement
-BoardElement <|-- TokenElement
-BoardElement <|-- ImageElement
-Room "1" -- "many" DiceRollEntry
-Character "1" -- "many" DiceRollEntry
-Room "1" -- "many" SessionEvent
+SS o-- SE : создаёт
+SS o-- RR : управляет
+SS o-- CR : токены
+SS o-- DR : публикует
+BS *-- Snap : владеет
+Snap *-- BE : содержит
+DS *-- DR : формирует
+CS *-- CR : владеет
+AS *-- UR : владеет
+RW o-- SE : рассылает
 
-SessionService --> AuthAccountsService
-SessionService --> CharacterService
-SessionService --> BoardService
-SessionService --> DiceService
+SS -[hidden]down- BS
+CS -[hidden]left- SS
+DS -[hidden]right- SS
+AS -[hidden]left- CS
+RW -[hidden]right- BS
 @enduml
 ```

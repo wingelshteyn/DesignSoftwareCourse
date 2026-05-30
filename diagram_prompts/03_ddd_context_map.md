@@ -1,32 +1,75 @@
-# Диаграмма 3. DDD карта контекстов
+# Диаграмма 3. DDD: карта поддоменов (рисунок 3)
 
-## Промпт
-Создай DDD context map для ASTROLL. В центре смысловое ядро "Game Session / VTT": комната, синхронная доска, присутствие участников, права мастера и игровые события. Покажи контексты Accounts, Friends, Characters, Board Storage, Rooms, Dice и внешний Excalidraw. Отметь типы отношений: Conformist от доменных контекстов к Accounts, Customer-Supplier от Characters/Board Storage/Rooms к Game Session, Partnership между Game Session и Dice, Anti-Corruption Layer между Game Session и Excalidraw. Подпиши Upstream/Downstream.
+## Назначение
+Рисунок 3 отчёта ПР8. **Карта поддоменов** (не context map со стрелками Upstream/Downstream), стиль как в MDT.
 
-## PlantUML
+## Эталон (что должно получиться)
+- Вверху **персона** «Администратор» (иконка человека, тёмно-синий).
+- Прямоугольные блоки поддоменов с тремя строками: **название**, **[тип]**, **описание**.
+- **Смысловое ядро** — блок **«Игровая сессия (VTT)»** по центру, **голубой фон** (#438DD5), белый текст.
+- **Вспомогательные поддомены** — **тёмно-серые** блоки (#666666), белый текст.
+- Связи — **пунктирные стрелки** с подписью на русском.
+- Компоновка: Admin сверху → Administration; Friends слева внизу → Game Session; Game Session → Administration, Characters, Dice.
+
+## Промпт для генерации
+```
+Нарисуй DDD subdomain map для системы ASTROLL (онлайн VTT для настольных RPG).
+
+Стиль идентичен отчёту MetalDefectTracker:
+- Персона «Администратор» сверху (иконка человека)
+- Прямоугольники с [Смысловое ядро] / [Вспомогательный поддомен] / [Поддомен общего назначения]
+- Ядро «Игровая сессия (VTT)» — голубой блок по центру
+- Остальные — серые блоки
+- Пунктирные стрелки с русскими подписями
+
+Поддомены:
+1. Администратор [Person] — сотрудник клуба, настраивает параметры системы и комнат
+2. Администрирование [Вспомогательный] — хранит runtime-настройки, лимиты комнат, аудит
+3. Друзья и социальные связи [Вспомогательный] — поиск пользователей, список друзей, приглашения
+4. Игровая сессия (VTT) [Смысловое ядро] — комната, синхронная доска, права мастера, realtime-события
+5. Персонажи и листы [Вспомогательный] — CRUD персонажей, JSON-листы, портреты
+6. Броски кубов [Вспомогательный] — формулы, история бросков в комнате
+
+Связи (пунктир):
+- Администратор → Администрирование: «Задаёт эксплуатационные параметры»
+- Друзья → Игровая сессия: «Приглашает участников в комнату»
+- Игровая сессия → Администрирование: «Получает лимиты и настройки»
+- Игровая сессия → Персонажи: «Использует sheetData и токены»
+- Игровая сессия ↔ Броски: «Публикует и отображает броски» (двусторонняя)
+```
+
+## PlantUML (готовая реализация)
 ```plantuml
 @startuml
-left to right direction
-skinparam componentStyle rectangle
+skinparam shadowing true
+skinparam defaultTextAlignment center
+skinparam rectangle {
+  BorderColor white
+  FontColor white
+  FontSize 11
+}
+skinparam arrow {
+  Color #666666
+  FontColor black
+  Style dashed
+}
 
-component "Accounts\n[Generic]\nПользователи, JWT,\nпрофили" as Accounts
-component "Friends\n[Supporting]\nДрузья и поиск" as Friends
-component "Characters\n[Supporting]\nЛисты персонажей,\nпортреты, JSON" as Characters
-component "Board Storage\n[Supporting]\nСнапшоты досок" as Boards
-component "Rooms\n[Supporting]\nroomId, roster,\nприглашения" as Rooms
-component "Dice\n[Supporting]\nБроски и история" as Dice
-component "Game Session / VTT\n[Core]\nРеалтайм-доска,\nправа, события" as Session
-cloud "Excalidraw\n[External]" as Excalidraw
+actor "Администратор\n[Person]\nСотрудник клуба,\nнастраивающий параметры\nсистемы и комнат" as Admin #08427B
 
-Friends ..> Accounts : Conformist\nD -> U
-Characters ..> Accounts : Conformist\nD -> U
-Rooms ..> Accounts : Conformist\nD -> U
-Session ..> Accounts : Conformist\nD -> U
+rectangle "Администрирование\n[Вспомогательный поддомен]\nХранит runtime-настройки,\nлимиты комнат и аудит" as AdminDom #666666
+rectangle "Друзья и социальные связи\n[Вспомогательный поддомен]\nПоиск пользователей,\nсписок друзей, приглашения" as Friends #666666
+rectangle "Игровая сессия (VTT)\n[Смысловое ядро]\nКомната, синхронная доска,\nправа мастера, realtime" as Session #438DD5
+rectangle "Персонажи и листы\n[Вспомогательный поддомен]\nCRUD персонажей,\nJSON-листы, портреты" as Characters #666666
+rectangle "Броски кубов\n[Вспомогательный поддомен]\nФормулы, история\nбросков в комнате" as Dice #666666
 
-Session ..> Characters : Customer-Supplier\nD -> U
-Session ..> Boards : Customer-Supplier\nD -> U
-Session ..> Rooms : Customer-Supplier\nD -> U
-Session -- Dice : Partnership
-Session ..> Excalidraw : ACL\nадаптация canvas API
+Admin -[#666666,dashed]-> AdminDom : Задаёт\nэксплуатационные\nпараметры
+Friends -[#666666,dashed]-> Session : Приглашает\nучастников\nв комнату
+Session -[#666666,dashed]-> AdminDom : Получает лимиты\nи настройки
+Session -[#666666,dashed]-> Characters : Использует sheetData\nи токены
+Session -[#666666,dashed]- Dice : Публикует\nи отображает\nброски
+
+AdminDom -[hidden]right- Session
+Friends -[hidden]up- AdminDom
+Characters -[hidden]right- Dice
 @enduml
 ```

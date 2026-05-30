@@ -1,62 +1,126 @@
-# Диаграмма 1. UML вариантов использования: Игрок
+# Диаграмма 1. UML вариантов использования: Игрок (рисунок 1)
 
-## Промпт
-Создай UML use case диаграмму для веб-системы ASTROLL, роли "Игрок". Покажи границу системы "ASTROLL". Актор "Игрок" должен выполнять регистрацию и вход, управление профилем, поиск и добавление друзей, создание/редактирование/удаление персонажей, импорт и экспорт листа персонажа, подключение к комнате по ссылке, просмотр и редактирование доски при наличии прав, бросок кубов от имени персонажа, просмотр истории бросков и выход из комнаты. Для редактирования доски добавь расширения: добавление изображения, текста, фигур, рисование, перемещение токена персонажа. Стиль: аккуратная учебная UML-диаграмма на русском языке.
+## Назначение
+Рисунок 1 отчёта ПР8. UML Use Case для роли **Игрок** в системе **ASTROLL**.
 
-## PlantUML
+## Эталон (что должно получиться)
+- Ориентация: **слева направо** или **сверху вниз**; актор **«Игрок»** (stick figure) **слева** от системы.
+- Прямоугольная **граница системы** с подписью **«ASTROLL»**.
+- Внутри границы — **оваловые** use case на **русском языке**.
+- Связи актора с use case — **сплошные линии** без стрелок на стороне актора.
+- Отношения **<<include>>** — **пунктирная стрелка** с подписью `<<include>>` (обязательная часть сценария).
+- Отношения **<<extend>>** — **пунктирная стрелка** с подписью `<<extend>>` (опциональное расширение).
+- Стиль: **учебная UML**, чёрно-белая, без лишних цветов, аккуратная плотная компоновка как в отчёте MDT.
+
+## Промпт для генерации
+```
+Нарисуй UML Use Case Diagram для веб-системы ASTROLL (Virtual Tabletop для настольных RPG).
+
+Стиль: идентичный учебному отчёту — актор слева, прямоугольная граница системы «ASTROLL», use case овалами внутри, русские подписи, связи include/extend пунктиром.
+
+Актор: Игрок (слева).
+
+Use case (внутри ASTROLL):
+- Зарегистрироваться
+- Войти в систему
+- Управлять профилем
+- Найти пользователя
+- Добавить/удалить друга
+- Управлять персонажами (обобщающий)
+  - Создать персонажа
+  - Редактировать лист персонажа
+  - Импортировать лист JSON
+  - Экспортировать лист JSON
+  - Удалить персонажа
+- Подключиться к комнате
+- Просматривать доску
+- Редактировать доску (обобщающий)
+  - Добавить изображение
+  - Добавить текст
+  - Добавить фигуру
+  - Рисовать на доске
+  - Переместить токен персонажа
+- Сделать бросок кубов
+- Просмотреть историю бросков
+- Выйти из комнаты
+
+Связи актора: ко всем верхнеуровневым use case (кроме дочерних).
+
+Generalization: «Управлять персонажами» обобщает 5 дочерних use case.
+
+Include: «Сделать бросок кубов» include «Редактировать лист персонажа» (нужны данные листа).
+
+Extend: «Редактировать доску» extend «Добавить изображение», «Добавить текст», «Добавить фигуру», «Рисовать на доске», «Переместить токен персонажа».
+
+Компоновка: use case сгруппированы логически (аккаунт сверху, персонажи, комната/доска, броски).
+```
+
+## PlantUML (готовая реализация)
 ```plantuml
 @startuml
 left to right direction
-actor "Игрок" as Player
-rectangle "ASTROLL" {
-  usecase "Зарегистрироваться" as UC_Register
-  usecase "Войти в систему" as UC_Login
-  usecase "Управлять профилем" as UC_Profile
-  usecase "Найти пользователя" as UC_Search
-  usecase "Добавить/удалить друга" as UC_Friend
-  usecase "Управлять персонажами" as UC_Characters
-  usecase "Создать персонажа" as UC_CreateCharacter
-  usecase "Редактировать лист персонажа" as UC_EditSheet
-  usecase "Импортировать лист JSON" as UC_Import
-  usecase "Экспортировать лист JSON" as UC_Export
-  usecase "Удалить персонажа" as UC_DeleteCharacter
-  usecase "Подключиться к комнате" as UC_JoinRoom
-  usecase "Просматривать доску" as UC_ViewBoard
-  usecase "Редактировать доску" as UC_EditBoard
-  usecase "Добавить изображение" as UC_AddImage
-  usecase "Добавить текст" as UC_AddText
-  usecase "Добавить фигуру" as UC_AddShape
-  usecase "Рисовать на доске" as UC_Draw
-  usecase "Переместить токен персонажа" as UC_MoveToken
-  usecase "Сделать бросок кубов" as UC_RollDice
-  usecase "Просмотреть историю бросков" as UC_RollHistory
-  usecase "Выйти из комнаты" as UC_LeaveRoom
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam usecase {
+  BackgroundColor white
+  BorderColor black
+}
+skinparam actor {
+  BorderColor black
 }
 
-Player --> UC_Register
-Player --> UC_Login
-Player --> UC_Profile
-Player --> UC_Search
-Player --> UC_Friend
-Player --> UC_Characters
-Player --> UC_JoinRoom
-Player --> UC_ViewBoard
-Player --> UC_EditBoard
-Player --> UC_RollDice
-Player --> UC_RollHistory
-Player --> UC_LeaveRoom
+actor "Игрок" as Player
 
-UC_Characters <|-- UC_CreateCharacter
-UC_Characters <|-- UC_EditSheet
-UC_Characters <|-- UC_Import
-UC_Characters <|-- UC_Export
-UC_Characters <|-- UC_DeleteCharacter
+rectangle "ASTROLL" {
+  usecase "Зарегистрироваться" as UC1
+  usecase "Войти в систему" as UC2
+  usecase "Управлять\nпрофилем" as UC3
+  usecase "Найти\nпользователя" as UC4
+  usecase "Добавить/\nудалить друга" as UC5
+  usecase "Управлять\nперсонажами" as UC6
+  usecase "Создать\nперсонажа" as UC6a
+  usecase "Редактировать\nлист персонажа" as UC6b
+  usecase "Импортировать\nлист JSON" as UC6c
+  usecase "Экспортировать\nлист JSON" as UC6d
+  usecase "Удалить\nперсонажа" as UC6e
+  usecase "Подключиться\nк комнате" as UC7
+  usecase "Просматривать\nдоску" as UC8
+  usecase "Редактировать\nдоску" as UC9
+  usecase "Добавить\nизображение" as UC9a
+  usecase "Добавить\nтекст" as UC9b
+  usecase "Добавить\nфигуру" as UC9c
+  usecase "Рисовать\nна доске" as UC9d
+  usecase "Переместить\nтокен персонажа" as UC9e
+  usecase "Сделать\nбросок кубов" as UC10
+  usecase "Просмотреть\nисторию бросков" as UC11
+  usecase "Выйти\nиз комнаты" as UC12
+}
 
-UC_EditBoard <.. UC_AddImage : <<extend>>
-UC_EditBoard <.. UC_AddText : <<extend>>
-UC_EditBoard <.. UC_AddShape : <<extend>>
-UC_EditBoard <.. UC_Draw : <<extend>>
-UC_EditBoard <.. UC_MoveToken : <<extend>>
-UC_RollDice ..> UC_EditSheet : <<include>>
+Player --> UC1
+Player --> UC2
+Player --> UC3
+Player --> UC4
+Player --> UC5
+Player --> UC6
+Player --> UC7
+Player --> UC8
+Player --> UC9
+Player --> UC10
+Player --> UC11
+Player --> UC12
+
+UC6 <|-- UC6a
+UC6 <|-- UC6b
+UC6 <|-- UC6c
+UC6 <|-- UC6d
+UC6 <|-- UC6e
+
+UC9 <.. UC9a : <<extend>>
+UC9 <.. UC9b : <<extend>>
+UC9 <.. UC9c : <<extend>>
+UC9 <.. UC9d : <<extend>>
+UC9 <.. UC9e : <<extend>>
+
+UC10 ..> UC6b : <<include>>
 @enduml
 ```

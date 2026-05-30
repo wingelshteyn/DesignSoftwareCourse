@@ -1,50 +1,65 @@
-# Диаграмма 12. C4 Components: безопасность
+# Диаграмма 12. C4 Components: безопасность (рисунок 12)
 
-## Промпт
-Создай обновлённую C4 Component диаграмму ASTROLL после добавления аспектов безопасности. Вынеси Authorization как отдельный компонент проверки прав и политик доступа. Покажи Auth & Accounts, Friends, Characters, Board, Rooms, Game Session, Dice, Audit, Input Validation, Encryption/Secrets. Все защищённые компоненты используют Authorization. Audit получает события команд, а Encryption/Secrets используется для JWT secret, хеширования паролей и приватных данных.
+## Назначение
+Рисунок 12 отчёта ПР8. Обновлённая C4 Component diagram с выделенным **Authorization**.
 
-## PlantUML
+## Эталон (что должно получиться)
+- Как рис. 11, но добавлен компонент **Authorization** [Component: Django App].
+- **Accounts** — только аутентификация (без RBAC-проверок в каждом модуле).
+- Все защищённые компоненты → **Authorization** → **Accounts**.
+- Layout: Authorization между Session и Accounts (как в MDT).
+
+## Промпт для генерации
+```
+Нарисуй обновлённую C4 Component Diagram ASTROLL после усиления безопасности (рис. 12 MDT).
+
+Container «Backend API», компоненты [Component: Django App].
+
+Компоненты:
+- Accounts — регистрация, аутентификация, bcrypt, JWT, профиль (БЕЗ проверки прав в каждом запросе)
+- Authorization — RBACPolicy, SessionPolicy, CharacterAccessPolicy, проверка прав комнаты и владельца
+- Friends, Characters, Board, Rooms, Dice, Game Session, Administration — как в монолите
+
+Зависимости:
+- Authorization → Accounts (получает роль/userId)
+- Friends, Characters, Board, Rooms, Dice, Game Session, Administration → Authorization
+- Administration → Accounts
+- Game Session → Rooms, Board, Dice, Characters (доменные связи сохраняются)
+
+Показать, что каждый защищённый компонент сначала обращается к Authorization.
+```
+
+## PlantUML (готовая реализация)
 ```plantuml
 @startuml
-left to right direction
-skinparam componentStyle rectangle
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
 
-package "Backend API\n[Container]" {
-  component "Auth & Accounts\nлогин, bcrypt,\nJWT, профиль" as Accounts
-  component "Authorization\nRBAC/ABAC,\nправа комнаты,\nпроверка владельца" as Authz
-  component "Input Validation\nDTO/Zod/Pydantic,\n4xx ошибки" as Validation
-  component "Characters\nперсонажи и листы" as Characters
-  component "Board\nснапшоты досок" as Board
-  component "Rooms\nкомнаты и участники" as Rooms
-  component "Game Session\nкоманды сессии,\nreadonly/kick" as Session
-  component "Dice\nброски" as Dice
-  component "Friends\nдрузья" as Friends
-  component "Audit\nжурнал действий" as Audit
-  component "Encryption & Secrets\nJWT secret,\nпароли, приватные поля" as Crypto
+LAYOUT_TOP_DOWN()
+
+Container_Boundary(backend, "Backend API", "Container: Django modular monolith") {
+  Component(friends, "Friends", "Django App", "Социальные связи,\nпоиск пользователей")
+  Component(characters, "Characters", "Django App", "Персонажи и листы")
+  Component(rooms, "Rooms", "Django App", "Комнаты и roster")
+  Component(board, "Board", "Django App", "Снапshоты и элементы доски")
+  Component(dice, "Dice", "Django App", "Броски и история")
+  Component(session, "Game Session", "Django App", "Команды сессии,\nreadonly/kick")
+  Component(admin, "Administration", "Django App", "Runtime-настройки")
+  Component(authz, "Authorization", "Django App", "RBAC, SessionPolicy,\nCharacterAccessPolicy")
+  Component(accounts, "Accounts", "Django App", "Регистрация,\nаутентификация, JWT")
 }
 
-database "PostgreSQL" as DB
-
-Accounts --> Crypto
-Accounts --> Validation
-Authz --> Accounts
-Characters --> Authz
-Characters --> Validation
-Board --> Authz
-Board --> Validation
-Rooms --> Authz
-Session --> Authz
-Session --> Validation
-Session --> Audit
-Dice --> Authz
-Friends --> Authz
-Audit --> DB
-Accounts --> DB
-Characters --> DB
-Board --> DB
-Rooms --> DB
-Session --> DB
-Dice --> DB
-Friends --> DB
+Rel(friends, authz, "проверка доступа")
+Rel(characters, authz, "CharacterAccessPolicy")
+Rel(board, authz, "права редактирования")
+Rel(rooms, authz, "host / member")
+Rel(dice, authz, "участник комнаты")
+Rel(session, authz, "SessionPolicy")
+Rel(admin, authz, "can_administer")
+Rel(authz, accounts, "роль, userId")
+Rel(session, rooms, "Room aggregate")
+Rel(session, board, "BoardSnapshot")
+Rel(session, dice, "DiceRollEntry")
+Rel(session, characters, "sheetData")
+Rel(admin, accounts, "управление пользователями")
 @enduml
 ```

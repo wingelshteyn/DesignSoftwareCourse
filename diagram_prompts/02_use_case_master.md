@@ -1,51 +1,104 @@
-# Диаграмма 2. UML вариантов использования: Мастер
+# Диаграмма 2. UML вариантов использования: Мастер (рисунок 2)
 
-## Промпт
-Создай UML use case диаграмму для роли "Мастер" в ASTROLL. Покажи границу системы. Мастер создает комнату, приглашает игроков, управляет участниками, включает режим "только просмотр", исключает игрока, управляет интерактивной доской, сохраняет и загружает снапшоты доски, ведет заметки мастера, управляет персонажами и токенами, инициирует броски и просматривает историю бросков. Используй include/extend там, где действие является обязательной частью или опциональным расширением.
+## Назначение
+Рисунок 2 отчёта ПР8. UML Use Case для роли **Мастер** в системе **ASTROLL**.
 
-## PlantUML
+## Эталон (что должно получиться)
+- Актор **«Мастер»** слева; граница системы **«ASTROLL»**.
+- Use case сгруппированы: **комната/участники**, **доска/сцена**, **персонажи**, **броски**, **заметки**.
+- **<<include>>**: создание комнаты включает приглашение; сохранение/загрузка снапшота включает управление доской.
+- **<<extend>>**: readonly и kick расширяют управление участниками; элементы доски расширяют управление доской.
+- Стиль как на рисунке 1 (чёрно-белая учебная UML).
+
+## Промпт для генерации
+```
+Нарисуй UML Use Case Diagram для роли «Мастер» в системе ASTROLL (онлайн VTT для настольных RPG).
+
+Стиль: как в учебном отчёте MDT — актор слева, граница «ASTROLL», овалы use case, русский язык, include/extend пунктиром.
+
+Актор: Мастер.
+
+Use case:
+- Создать комнату
+- Пригласить игроков
+- Управлять участниками
+- Выдать режим «только просмотр»
+- Исключить игрока (kick)
+- Управлять доской
+- Добавить карту/изображение
+- Добавить текст/фигуры
+- Разместить токены персонажей
+- Сохранить снапшот доски
+- Загрузить снапшот доски
+- Вести заметки мастера
+- Управлять персонажами
+- Сделать бросок кубов
+- Просмотреть историю бросков
+- Завершить сессию
+
+Include:
+- «Создать комнату» include «Пригласить игроков»
+- «Сохранить снапшот доски» include «Управлять доской»
+- «Загрузить снапшот доски» include «Управлять доской»
+
+Extend:
+- «Управлять участниками» extend «Выдать режим только просмотр»
+- «Управлять участниками» extend «Исключить игрока»
+- «Управлять доской» extend «Добавить карту/изображение», «Добавить текст/фигуры», «Разместить токены персонажей»
+
+Мастер связан со всеми верхнеуровневыми use case.
+```
+
+## PlantUML (готовая реализация)
 ```plantuml
 @startuml
 left to right direction
-actor "Мастер" as Master
-rectangle "ASTROLL" {
-  usecase "Создать комнату" as UC_CreateRoom
-  usecase "Пригласить игроков" as UC_Invite
-  usecase "Управлять участниками" as UC_Members
-  usecase "Выдать режим\nтолько просмотр" as UC_Readonly
-  usecase "Исключить игрока" as UC_Kick
-  usecase "Управлять доской" as UC_Board
-  usecase "Добавить карту/изображение" as UC_Image
-  usecase "Добавить текст/фигуры" as UC_Drawables
-  usecase "Разместить токены персонажей" as UC_Tokens
-  usecase "Сохранить снапшот доски" as UC_SaveBoard
-  usecase "Загрузить снапшот доски" as UC_LoadBoard
-  usecase "Вести заметки мастера" as UC_Notes
-  usecase "Управлять персонажами" as UC_Characters
-  usecase "Сделать бросок кубов" as UC_Roll
-  usecase "Просмотреть историю бросков" as UC_History
-  usecase "Завершить сессию" as UC_EndSession
+skinparam shadowing false
+skinparam usecase {
+  BackgroundColor white
+  BorderColor black
 }
 
-Master --> UC_CreateRoom
-Master --> UC_Invite
-Master --> UC_Members
-Master --> UC_Board
-Master --> UC_SaveBoard
-Master --> UC_LoadBoard
-Master --> UC_Notes
-Master --> UC_Characters
-Master --> UC_Roll
-Master --> UC_History
-Master --> UC_EndSession
+actor "Мастер" as Master
 
-UC_Members <.. UC_Readonly : <<extend>>
-UC_Members <.. UC_Kick : <<extend>>
-UC_Board <.. UC_Image : <<extend>>
-UC_Board <.. UC_Drawables : <<extend>>
-UC_Board <.. UC_Tokens : <<extend>>
-UC_CreateRoom ..> UC_Invite : <<include>>
-UC_SaveBoard ..> UC_Board : <<include>>
-UC_LoadBoard ..> UC_Board : <<include>>
+rectangle "ASTROLL" {
+  usecase "Создать\nкомнату" as UC1
+  usecase "Пригласить\nигроков" as UC2
+  usecase "Управлять\nучастниками" as UC3
+  usecase "Выдать режим\n«только просмотр»" as UC3a
+  usecase "Исключить\nигрока" as UC3b
+  usecase "Управлять\nдоской" as UC4
+  usecase "Добавить\nкарту/изображение" as UC4a
+  usecase "Добавить\nтекст/фигуры" as UC4b
+  usecase "Разместить\nтокены персонажей" as UC4c
+  usecase "Сохранить\nснапшот доски" as UC5
+  usecase "Загрузить\nснапшот доски" as UC6
+  usecase "Вести заметки\nмастера" as UC7
+  usecase "Управлять\nперсонажами" as UC8
+  usecase "Сделать\nбросок кубов" as UC9
+  usecase "Просмотреть\nисторию бросков" as UC10
+  usecase "Завершить\nсессию" as UC11
+}
+
+Master --> UC1
+Master --> UC3
+Master --> UC4
+Master --> UC5
+Master --> UC6
+Master --> UC7
+Master --> UC8
+Master --> UC9
+Master --> UC10
+Master --> UC11
+
+UC1 ..> UC2 : <<include>>
+UC5 ..> UC4 : <<include>>
+UC6 ..> UC4 : <<include>>
+
+UC3 <.. UC3a : <<extend>>
+UC3 <.. UC3b : <<extend>>
+UC4 <.. UC4a : <<extend>>
+UC4 <.. UC4b : <<extend>>
+UC4 <.. UC4c : <<extend>>
 @enduml
 ```

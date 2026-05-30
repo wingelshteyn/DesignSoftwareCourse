@@ -1,38 +1,80 @@
-# Диаграмма 18. 4+1: процессное представление
+# Диаграмма 18. 4+1: процессное представление (рисунок 18)
 
-## Промпт
-Создай процессное представление ASTROLL. Синхронные HTTP-запросы идут через API Gateway к Auth, Character, Board и Session Service. Реалтайм-события доски и бросков идут через Realtime Gateway. Session Service публикует события в Broker, а Board Worker сохраняет снапшоты в Object Storage и PostgreSQL. Покажи сценарий: игрок подключается к комнате, получает снапшот, двигает токен, событие рассылается всем участникам и сохраняется в журнал.
+## Назначение
+Рисунок 18 отчёта ПР8. **Process View** — потоки синхронных и асинхронных запросов.
 
-## PlantUML
+## Эталон (что должно получиться)
+- **API Gateway** сверху по центру.
+- Пунктирная граница **[Session Process]** вокруг Session Service, Broker, Realtime Worker, Board Service.
+- **Двойные стрелки** (HTTP sync) от Gateway к сервисам.
+- **Пунктирные стрелки** (async) Session → Broker → Realtime Worker.
+- Параллелограммы/прямоугольники как в MDT process diagram.
+- Сценарий: игрок двигает токен → broadcast всем клиентам.
+
+## Промпт для генерации
+```
+Нарисуй Process View (4+1) для ASTROLL, стиль рис. 18 MDT (процессная диаграмма).
+
+Элементы:
+- API Gateway (верх, центр) — три маленьких прямоугольника слева = endpoints
+- Other Services (справа вне процесса) — Auth, Characters
+- Пунктирная рамка [Session Process]:
+  - Session Service (принимает команды комнаты)
+  - Broker [Redis Streams]
+  - Realtime Worker (WebSocket broadcast)
+  - Board Service (валидация элементов, опционально)
+
+Потоки:
+1. Клиент → API Gateway → Session Service (sync, двойная линия) — POST /rooms/{id}/commands
+2. Session Service → Broker (solid) — publish SessionEventDTO
+3. Broker → Realtime Worker (dashed async)
+4. Realtime Worker → Клиенты (broadcast)
+5. Session Service → Board Service (sync, optional validate)
+
+Подпись сценария: «MoveTokenCommand → SessionEvent → Redis → Realtime Worker → WebSocket».
+```
+
+## PlantUML (готовая реализация)
 ```plantuml
 @startuml
-left to right direction
+skinparam rectangle {
+  BackgroundColor white
+  BorderColor black
+}
 skinparam componentStyle rectangle
+skinparam arrowThickness 2
 
-actor "Игрок" as Player
-component "API Gateway" as Gateway
-component "Realtime Gateway" as Realtime
-component "Session Service" as Session
-component "Board Service" as Board
-component "Character Service" as Characters
-queue "Broker" as Broker
-component "Board Worker" as Worker
-database "PostgreSQL" as DB
-database "Object Storage" as Storage
+rectangle "API Gateway" as GW {
+  rectangle " " as ep1
+  rectangle " " as ep2
+  rectangle " " as ep3
+}
 
-Player --> Gateway : HTTP login,\nget room
-Player --> Realtime : WebSocket connect
-Gateway --> Session : join room
-Session --> Characters : получить токены\nперсонажей
-Session --> Board : получить снапшот
-Board --> DB
-Board --> Storage
-Realtime --> Session : move token command
-Session --> Broker : SessionEvent
-Broker --> Realtime : broadcast event
-Realtime --> Player : обновление доски
-Broker --> Worker : persist snapshot task
-Worker --> DB : журнал событий
-Worker --> Storage : снапшот доски
+rectangle "Auth & Character\nServices" as Other
+
+together {
+  rectangle "Session Process" as SP #white;line:dashed;text:[Session Process] {
+    rectangle "Session Service" as Session
+    rectangle "Broker\n[Redis Streams]" as Broker
+    rectangle "Realtime Worker" as Worker
+    rectangle "Board Service" as Board
+  }
+}
+
+actor "Клиент\n(Игрок/Мастер)" as Client
+
+Client -[#black,bold]-> GW : HTTPS
+GW -[#black,bold]-> Session : POST /rooms/{id}/commands
+GW -[#black,bold]-> Other : REST
+Session -[#black]-> Broker : publish\nSessionEventDTO
+Broker ..[#black,dashed]-> Worker : consume
+Worker ..[#black,dashed]-> Client : WebSocket\nbroadcast
+Session -[#black,bold]-> Board : validate element\n(optional)
+
+note bottom of Session
+  MoveTokenCommand →
+  SessionPolicy → execute →
+  SessionEventDTO
+end note
 @enduml
 ```

@@ -1,54 +1,79 @@
-# Диаграмма 20. 4+1: физическое представление
+# Диаграмма 20. 4+1: физическое представление (рисунок 20)
 
-## Промпт
-Создай physical/deployment view ASTROLL. Пользователи и браузеры подключаются к Gateway Node. Внутри Kubernetes Cluster несколько application nodes с контейнерами frontend, api gateway, auth, session, realtime, board, characters, dice, workers. Отдельно покажи Primary PostgreSQL и Replica PostgreSQL, Redis Cluster/Broker, Object Storage Node и Storage Replica. Gateway принимает HTTPS/WebSocket. Сервисы масштабируются горизонтально.
+## Назначение
+Рисунок 20 отчёта ПР8. **Physical/Deployment View** — Docker/K8s развёртывание.
 
-## PlantUML
+## Эталон (что должно получиться)
+- **Player Browser** и **Master Browser** сверху (вместо Camera + Operator в MDT).
+- **Gateway Node** — единая точка входа HTTPS/WSS.
+- **K8s Nodes** — стопка квадратов (несколько pod'ов).
+- **Primary PostgreSQL → Replica PostgreSQL** (репликация).
+- **S3 Node → S3 Replica** (реплика хранилища).
+- Чёрно-белый deployment-стиль как MDT рис. 20.
+- Источник: `ASTROLL/docker-compose.yml`.
+
+## Промпт для генерации
+```
+Нарисуй Physical/Deployment View (4+1) для ASTROLL, стиль рис. 20 MDT.
+
+Сверху external nodes:
+- Player Browser — браузер игрока
+- Master Browser — браузер мастера
+Оба → Gateway Node (HTTPS / WebSocket)
+
+Gateway Node → K8s Nodes (стопка из 3 квадратов, подпись «Services & Worker»):
+  Pods: Frontend, API Gateway, auth-accounts, session, board, characters, dice, realtime-worker
+
+Справа storage tier (два ряда):
+- Primary Database Server → Replica Database Server (PostgreSQL)
+- S3 Node (MinIO) → S3 Replica Server
+
+K8s → Primary DB, K8s → S3 Node
+Self-loop на K8s (внутренняя коммуникация сервисов)
+
+Подписи на русском. Чёрно-белая deployment diagram.
+```
+
+## PlantUML (готовая реализация)
 ```plantuml
 @startuml
-left to right direction
+skinparam nodesep 30
+skinparam ranksep 40
 
-node "User Devices\nBrowser" as Browser
-node "Gateway Node\nHTTPS / WebSocket" as Gateway
+node "Player Browser" as PB
+node "Master Browser" as MB
+node "Gateway Node\nHTTPS / WebSocket" as GW
 
-node "K8s Cluster\nApplication Nodes" as K8s {
-  node "Pod: Frontend" as Frontend
-  node "Pod: API Gateway" as ApiGateway
-  node "Pods: Auth Service" as Auth
-  node "Pods: Session Service" as Session
-  node "Pods: Realtime Gateway" as Realtime
-  node "Pods: Board Service" as Board
-  node "Pods: Character Service" as Characters
-  node "Pods: Dice Service" as Dice
-  node "Pods: Workers" as Workers
+node "K8s Nodes\n(Services & Worker)" as K8s {
+  node "Pods" as Pods {
+    artifact "Frontend"
+    artifact "API Gateway"
+    artifact "session"
+    artifact "board"
+    artifact "realtime-worker"
+    artifact "auth-accounts"
+  }
 }
 
-database "Primary PostgreSQL\nServer" as PgPrimary
-database "Replica PostgreSQL\nServer" as PgReplica
-database "Redis Cluster\nCache/Broker" as Redis
-database "S3 Node\nObject Storage" as S3
-database "S3 Replica\nBackup Storage" as S3Replica
+database "Primary Database\nServer\n[PostgreSQL]" as PG1
+database "Replica Database\nServer" as PG2
+database "S3 Node\n[MinIO]" as S3
+database "S3 Replica\nServer" as S3R
 
-Browser --> Gateway
-Gateway --> ApiGateway
-ApiGateway --> Frontend
-ApiGateway --> Auth
-ApiGateway --> Session
-ApiGateway --> Board
-ApiGateway --> Characters
-ApiGateway --> Dice
-ApiGateway --> Realtime
-Session --> Redis
-Realtime --> Redis
-Workers --> Redis
-Auth --> PgPrimary
-Session --> PgPrimary
-Board --> PgPrimary
-Characters --> PgPrimary
-Dice --> PgPrimary
-PgPrimary --> PgReplica
-Board --> S3
-Characters --> S3
-S3 --> S3Replica
+PB --> GW
+MB --> GW
+GW --> K8s
+K8s --> PG1 : SQL
+PG1 --> PG2 : replication
+K8s --> S3 : object API
+S3 --> S3R : replication
+K8s --> K8s : inter-service\nHTTP / Redis
+
+note right of K8s
+  docker-compose.yml /
+  Kubernetes horizontal
+  scaling: session, board,
+  realtime-worker
+end note
 @enduml
 ```
