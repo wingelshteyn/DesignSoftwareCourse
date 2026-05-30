@@ -1,0 +1,17 @@
+# Quantum 2 - ML Inference Service
+fastapi==0.115.6
+uvicorn[standard]==0.32.1
+python-multipart==0.0.20    # multipart/form-data file upload
+
+# ML runtime (choose one depending on deployment)
+onnxruntime==1.20.1         # lightweight CPU inference
+torch==2.5.1                # full PyTorch (comment out if using ONNX only)
+torchvision==0.20.1
+
+# Image processing
+Pillow==10.3.0
+numpy==1.26.4
+
+# Config
+pydantic-settings==2.7.0
+python-decouple==3.8

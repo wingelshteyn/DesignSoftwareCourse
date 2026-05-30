@@ -1,0 +1,184 @@
+@startuml classes
+set namespaceSeparator none
+class "AddManualDefectCommand" as apps.verification.commands.AddManualDefectCommand {
+  bbox
+  label : str
+  marker
+  execute() -> str
+}
+class "AuditEntry" as apps.verification.commands.AuditEntry {
+  action_name : str
+  control_record_id : int
+  description : str
+  operator_id : int
+}
+class "BoundingBox" as apps.detection.defects.BoundingBox {
+  height : int
+  width : int
+  x : int
+  y : int
+}
+class "ConfirmDefectsCommand" as apps.verification.commands.ConfirmDefectsCommand {
+  execute() -> str
+}
+class "CrazingDefect" as apps.detection.defects.CrazingDefect {
+  code : str
+  display_name : str
+}
+class "CrazingFactory" as apps.detection.factories.CrazingFactory {
+  create_defect(prediction: ModelPrediction) -> Defect
+}
+class "Defect" as apps.detection.defects.Defect {
+  bbox
+  code : str
+  confidence : float
+  display_name : str
+  source : str
+  describe() -> str
+  is_manual() -> bool
+}
+class "DefectFactory" as apps.detection.factories.DefectFactory {
+  {abstract}create_defect(prediction: ModelPrediction) -> Defect
+  register_prediction(prediction: ModelPrediction) -> Defect
+}
+class "DefectFactoryRegistry" as apps.detection.factories.DefectFactoryRegistry {
+  get_factory(label: str) -> DefectFactory
+  register(label: str, factory: DefectFactory) -> None
+}
+class "DetectionApplicationService" as apps.detection.services.DetectionApplicationService {
+  prediction_provider
+  result_builder
+  detect(image_path: str, threshold: float) -> list[Defect]
+}
+class "DetectionResultBuilder" as apps.detection.services.DetectionResultBuilder {
+  registry
+  build_defects(predictions: Iterable[ModelPrediction]) -> list[Defect]
+}
+class "ExcludeDefectCommand" as apps.verification.commands.ExcludeDefectCommand {
+  defect
+  execute() -> str
+}
+class "ExternalMLDetectionService" as apps.detection.external_client.ExternalMLDetectionService {
+  analyze_image(image_path: str, threshold: float) -> dict
+}
+class "InclusionDefect" as apps.detection.defects.InclusionDefect {
+  code : str
+  display_name : str
+}
+class "InclusionFactory" as apps.detection.factories.InclusionFactory {
+  create_defect(prediction: ModelPrediction) -> Defect
+}
+class "MLServiceAdapter" as apps.detection.adapters.MLServiceAdapter {
+  adaptee
+  get_predictions(image_path: str, threshold: float) -> list[ModelPrediction]
+}
+class "ManualDefectMarker" as apps.verification.services.ManualDefectMarker {
+  registry
+  mark(label: str, bbox: BoundingBox, confidence: float) -> Defect
+}
+class "ModelPrediction" as apps.detection.defects.ModelPrediction {
+  bbox
+  confidence : float
+  label : str
+  source : str
+}
+class "OtherDefect" as apps.detection.defects.OtherDefect {
+  code : str
+  display_name : str
+}
+class "OtherDefectFactory" as apps.detection.factories.OtherDefectFactory {
+  create_defect(prediction: ModelPrediction) -> Defect
+}
+class "PatchDefect" as apps.detection.defects.PatchDefect {
+  code : str
+  display_name : str
+}
+class "PatchFactory" as apps.detection.factories.PatchFactory {
+  create_defect(prediction: ModelPrediction) -> Defect
+}
+class "PittedSurfaceDefect" as apps.detection.defects.PittedSurfaceDefect {
+  code : str
+  display_name : str
+}
+class "PittedSurfaceFactory" as apps.detection.factories.PittedSurfaceFactory {
+  create_defect(prediction: ModelPrediction) -> Defect
+}
+class "PredictionProvider" as apps.detection.adapters.PredictionProvider {
+  {abstract}get_predictions(image_path: str, threshold: float) -> list[ModelPrediction]
+}
+class "RejectDetectionCommand" as apps.verification.commands.RejectDetectionCommand {
+  execute() -> str
+}
+class "RolledInScaleDefect" as apps.detection.defects.RolledInScaleDefect {
+  code : str
+  display_name : str
+}
+class "RolledInScaleFactory" as apps.detection.factories.RolledInScaleFactory {
+  create_defect(prediction: ModelPrediction) -> Defect
+}
+class "ScratchDefect" as apps.detection.defects.ScratchDefect {
+  code : str
+  display_name : str
+}
+class "ScratchFactory" as apps.detection.factories.ScratchFactory {
+  create_defect(prediction: ModelPrediction) -> Defect
+}
+class "VerificationAuditLog" as apps.verification.commands.VerificationAuditLog {
+  entries : list[AuditEntry]
+  add_entry(entry: AuditEntry) -> None
+}
+class "VerificationCommand" as apps.verification.commands.VerificationCommand {
+  session
+  {abstract}execute() -> str
+}
+class "VerificationCommandInvoker" as apps.verification.commands.VerificationCommandInvoker {
+  audit_log
+  execute_command() -> str
+  set_command(command: VerificationCommand) -> None
+}
+class "VerificationSession" as apps.verification.services.VerificationSession {
+  control_record_id : int
+  defects : list[Defect]
+  operator_id : int
+  status
+  add_manual_defect(defect: Defect) -> None
+  confirm_defects() -> None
+  exclude_defect(defect: Defect) -> None
+  reject_detection() -> None
+}
+class "VerificationStatus" as apps.verification.services.VerificationStatus {
+  name
+}
+apps.detection.adapters.MLServiceAdapter --|> apps.detection.adapters.PredictionProvider
+apps.detection.defects.CrazingDefect --|> apps.detection.defects.Defect
+apps.detection.defects.InclusionDefect --|> apps.detection.defects.Defect
+apps.detection.defects.OtherDefect --|> apps.detection.defects.Defect
+apps.detection.defects.PatchDefect --|> apps.detection.defects.Defect
+apps.detection.defects.PittedSurfaceDefect --|> apps.detection.defects.Defect
+apps.detection.defects.RolledInScaleDefect --|> apps.detection.defects.Defect
+apps.detection.defects.ScratchDefect --|> apps.detection.defects.Defect
+apps.detection.factories.CrazingFactory --|> apps.detection.factories.DefectFactory
+apps.detection.factories.InclusionFactory --|> apps.detection.factories.DefectFactory
+apps.detection.factories.OtherDefectFactory --|> apps.detection.factories.DefectFactory
+apps.detection.factories.PatchFactory --|> apps.detection.factories.DefectFactory
+apps.detection.factories.PittedSurfaceFactory --|> apps.detection.factories.DefectFactory
+apps.detection.factories.RolledInScaleFactory --|> apps.detection.factories.DefectFactory
+apps.detection.factories.ScratchFactory --|> apps.detection.factories.DefectFactory
+apps.verification.commands.AddManualDefectCommand --|> apps.verification.commands.VerificationCommand
+apps.verification.commands.ConfirmDefectsCommand --|> apps.verification.commands.VerificationCommand
+apps.verification.commands.ExcludeDefectCommand --|> apps.verification.commands.VerificationCommand
+apps.verification.commands.RejectDetectionCommand --|> apps.verification.commands.VerificationCommand
+apps.detection.defects.Defect --> apps.detection.defects.BoundingBox : bbox
+apps.detection.defects.ModelPrediction --> apps.detection.defects.BoundingBox : bbox
+apps.detection.services.DetectionResultBuilder --> apps.detection.factories.DefectFactoryRegistry : registry
+apps.verification.services.ManualDefectMarker --> apps.detection.factories.DefectFactoryRegistry : registry
+apps.detection.services.DetectionApplicationService --> apps.detection.services.DetectionResultBuilder : result_builder
+apps.verification.commands.VerificationCommandInvoker --> apps.verification.commands.VerificationAuditLog : audit_log
+apps.verification.services.VerificationSession --> apps.verification.services.VerificationStatus : status
+apps.detection.adapters.PredictionProvider --o apps.detection.services.DetectionApplicationService : prediction_provider
+apps.detection.defects.BoundingBox --o apps.verification.commands.AddManualDefectCommand : bbox
+apps.detection.defects.Defect --o apps.verification.commands.ExcludeDefectCommand : defect
+apps.detection.external_client.ExternalMLDetectionService --o apps.detection.adapters.MLServiceAdapter : adaptee
+apps.verification.services.ManualDefectMarker --o apps.verification.commands.AddManualDefectCommand : marker
+apps.verification.services.VerificationSession --o apps.verification.commands.VerificationCommand : session
+@enduml

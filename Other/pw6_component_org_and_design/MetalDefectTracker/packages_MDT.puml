@@ -1,0 +1,139 @@
+@startuml packages_MDT
+set namespaceSeparator none
+package "apps" as apps {
+}
+package "apps.accounts" as apps.accounts {
+}
+package "apps.accounts.admin" as apps.accounts.admin {
+}
+package "apps.accounts.apps" as apps.accounts.apps {
+}
+package "apps.accounts.migrations" as apps.accounts.migrations {
+}
+package "apps.accounts.models" as apps.accounts.models {
+}
+package "apps.accounts.tests" as apps.accounts.tests {
+}
+package "apps.accounts.views" as apps.accounts.views {
+}
+package "apps.admin" as apps.admin {
+}
+package "apps.administration" as apps.administration {
+}
+package "apps.administration.admin" as apps.administration.admin {
+}
+package "apps.administration.apps" as apps.administration.apps {
+}
+package "apps.administration.migrations" as apps.administration.migrations {
+}
+package "apps.administration.models" as apps.administration.models {
+}
+package "apps.administration.tests" as apps.administration.tests {
+}
+package "apps.administration.views" as apps.administration.views {
+}
+package "apps.analytics" as apps.analytics {
+}
+package "apps.analytics.admin" as apps.analytics.admin {
+}
+package "apps.analytics.apps" as apps.analytics.apps {
+}
+package "apps.analytics.migrations" as apps.analytics.migrations {
+}
+package "apps.analytics.models" as apps.analytics.models {
+}
+package "apps.analytics.tests" as apps.analytics.tests {
+}
+package "apps.analytics.views" as apps.analytics.views {
+}
+package "apps.apps" as apps.apps {
+}
+package "apps.detection" as apps.detection {
+}
+package "apps.detection.adapters" as apps.detection.adapters {
+}
+package "apps.detection.admin" as apps.detection.admin {
+}
+package "apps.detection.apps" as apps.detection.apps {
+}
+package "apps.detection.defects" as apps.detection.defects {
+}
+package "apps.detection.external_client" as apps.detection.external_client {
+}
+package "apps.detection.factories" as apps.detection.factories {
+}
+package "apps.detection.migrations" as apps.detection.migrations {
+}
+package "apps.detection.models" as apps.detection.models {
+}
+package "apps.detection.services" as apps.detection.services {
+}
+package "apps.detection.tests" as apps.detection.tests {
+}
+package "apps.detection.views" as apps.detection.views {
+}
+package "apps.models" as apps.models {
+}
+package "apps.receiver" as apps.receiver {
+}
+package "apps.receiver.admin" as apps.receiver.admin {
+}
+package "apps.receiver.apps" as apps.receiver.apps {
+}
+package "apps.receiver.migrations" as apps.receiver.migrations {
+}
+package "apps.receiver.models" as apps.receiver.models {
+}
+package "apps.receiver.tests" as apps.receiver.tests {
+}
+package "apps.receiver.views" as apps.receiver.views {
+}
+package "apps.tests" as apps.tests {
+}
+package "apps.verification" as apps.verification {
+}
+package "apps.verification.admin" as apps.verification.admin {
+}
+package "apps.verification.apps" as apps.verification.apps {
+}
+package "apps.verification.commands" as apps.verification.commands {
+}
+package "apps.verification.migrations" as apps.verification.migrations {
+}
+package "apps.verification.models" as apps.verification.models {
+}
+package "apps.verification.services" as apps.verification.services {
+}
+package "apps.verification.tests" as apps.verification.tests {
+}
+package "apps.verification.views" as apps.verification.views {
+}
+package "apps.views" as apps.views {
+}
+apps.administration.models --> apps.accounts.models
+apps.analytics.models --> apps.accounts.models
+apps.analytics.models --> apps.receiver.models
+apps.analytics.models --> apps.verification.models
+apps.detection.adapters --> apps.detection.defects
+apps.detection.adapters --> apps.detection.external_client
+apps.detection.factories --> apps.detection.defects
+apps.detection.models --> apps.administration.models
+apps.detection.models --> apps.receiver.models
+apps.detection.services --> apps.detection.adapters
+apps.detection.services --> apps.detection.defects
+apps.detection.services --> apps.detection.factories
+apps.detection.views --> apps.detection.adapters
+apps.detection.views --> apps.detection.external_client
+apps.detection.views --> apps.detection.services
+apps.receiver.models --> apps.administration.models
+apps.verification.commands --> apps.detection.defects
+apps.verification.commands --> apps.verification.services
+apps.verification.models --> apps.accounts.models
+apps.verification.models --> apps.administration.models
+apps.verification.models --> apps.detection.models
+apps.verification.services --> apps.detection.defects
+apps.verification.services --> apps.detection.factories
+apps.verification.views --> apps.detection.defects
+apps.verification.views --> apps.verification.commands
+apps.verification.views --> apps.verification.services
+@enduml
