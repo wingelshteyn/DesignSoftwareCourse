@@ -6,7 +6,7 @@
 ## Эталон (что должно получиться)
 - **Облачные формы** (cloud) с **пунктирной границей**.
 - Узлы-сущности: SessionEvent, BoardSnapshot, DiceRoll, RoomRef, CharacterRef и т.д.
-- Узлы-сервисы: Session Service, Board Service, Auth Service...
+- Узлы-сервисы: Session Service, Board Service, Identity Service...
 - Связи с маркерами **○** (open circle) и **●** (filled circle) как в MDT.
 - Стиль: белый фон, чёрный текст, layout сверху вниз.
 
@@ -30,8 +30,7 @@
 - Board Service
 - Character Service
 - Dice Service
-- Auth & Accounts Service
-- Realtime Worker
+- Identity Service
 
 Связи (со маркерами):
 - Session Service ○-- SessionEvent (создаёт)
@@ -42,8 +41,8 @@
 - Dice Service ●-- DiceRoll
 - Session Service ○-- DiceRoll (публикует)
 - Character Service ●-- CharacterRef
-- Auth Service ●-- UserRef
-- Realtime Worker ○-- SessionEvent (рассылает)
+- Identity Service ●-- UserRef
+- Session Service ○-- SessionEvent (рассылает через внутренний realtime-worker)
 
 Layout: сервисы в центре, сущности вокруг, стрелки с подписями.
 ```
@@ -63,8 +62,7 @@ cloud "Session Service" as SS
 cloud "Board Service" as BS
 cloud "Character Service" as CS
 cloud "Dice Service" as DS
-cloud "Auth & Accounts Service" as AS
-cloud "Realtime Worker" as RW
+cloud "Identity Service" as IS
 
 cloud "SessionEvent\nroom_id, event_type,\npayload" as SE
 cloud "BoardSnapshot\nboard_id, version" as Snap
@@ -82,13 +80,12 @@ BS *-- Snap : владеет
 Snap *-- BE : содержит
 DS *-- DR : формирует
 CS *-- CR : владеет
-AS *-- UR : владеет
-RW o-- SE : рассылает
+IS *-- UR : владеет
+SS o-- SE : рассылает
 
 SS -[hidden]down- BS
 CS -[hidden]left- SS
 DS -[hidden]right- SS
-AS -[hidden]left- CS
-RW -[hidden]right- BS
+IS -[hidden]left- CS
 @enduml
 ```

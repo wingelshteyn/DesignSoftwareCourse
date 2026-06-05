@@ -4,7 +4,7 @@
 Рисунок 19 отчёта ПР8. **Development View** — структура репозитория и слоёв сервисов.
 
 ## Эталон (что должно получиться)
-- **Session Service** (шаблон) — внутри 4 блока: **api**, **service**, **repository**, **models**.
+- **Session Service** (шаблон) — внутри 4 блока: **api**, **service**, **repository**, **models**; realtime-worker входит в слой service.
 - **Board Service** — **api**, **app** (или service).
 - **shared-contracts** снизу по центру: **DTOs**, **Interfaces**.
 - Прямоугольники с тенью, layout треугольник как в MDT.
@@ -30,7 +30,7 @@
 
 Связи: Session Service и Board Service зависят от shared-contracts (стрелки вниз).
 
-Также упомянуть в промпте: у каждого сервиса Dockerfile, ci.yml, requirements.txt, tests/.
+Также упомянуть в промпте: у каждого из 6 сервисов (`identity`, `characters`, `session`, `board`, `dice`, `administration`) есть Dockerfile, ci.yml, requirements.txt, tests/.
 ```
 
 ## PlantUML (готовая реализация)
@@ -45,7 +45,7 @@ skinparam packageStyle rectangle
 
 rectangle "Session Service\n(общий шаблон сервисов)" as Session {
   rectangle "api" as s_api
-  rectangle "service" as s_svc
+  rectangle "service\n(commands, policies,\nrealtime worker)" as s_svc
   rectangle "repository" as s_repo
   rectangle "models" as s_mod
 }

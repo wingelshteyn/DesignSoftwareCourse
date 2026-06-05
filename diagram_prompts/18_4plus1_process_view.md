@@ -5,9 +5,9 @@
 
 ## Эталон (что должно получиться)
 - **API Gateway** сверху по центру.
-- Пунктирная граница **[Session Process]** вокруг Session Service, Broker, Realtime Worker, Board Service.
+- Пунктирная граница **[Session Process]** вокруг Session API, Broker, Session Realtime Worker, Board Service.
 - **Двойные стрелки** (HTTP sync) от Gateway к сервисам.
-- **Пунктирные стрелки** (async) Session → Broker → Realtime Worker.
+- **Пунктирные стрелки** (async) Session API → Broker → Session Realtime Worker.
 - Параллелограммы/прямоугольники как в MDT process diagram.
 - Сценарий: игрок двигает токен → broadcast всем клиентам.
 
@@ -17,21 +17,21 @@
 
 Элементы:
 - API Gateway (верх, центр) — три маленьких прямоугольника слева = endpoints
-- Other Services (справа вне процесса) — Auth, Characters
+- Other Services (справа вне процесса) — Identity, Characters
 - Пунктирная рамка [Session Process]:
-  - Session Service (принимает команды комнаты)
+  - Session API (принимает команды комнаты)
   - Broker [Redis Streams]
-  - Realtime Worker (WebSocket broadcast)
+  - Session Realtime Worker (внутренний worker-компонент Session Service, WebSocket broadcast)
   - Board Service (валидация элементов, опционально)
 
 Потоки:
-1. Клиент → API Gateway → Session Service (sync, двойная линия) — POST /rooms/{id}/commands
-2. Session Service → Broker (solid) — publish SessionEventDTO
-3. Broker → Realtime Worker (dashed async)
-4. Realtime Worker → Клиенты (broadcast)
-5. Session Service → Board Service (sync, optional validate)
+1. Клиент → API Gateway → Session API (sync, двойная линия) — POST /rooms/{id}/commands
+2. Session API → Broker (solid) — publish SessionEventDTO
+3. Broker → Session Realtime Worker (dashed async)
+4. Session Realtime Worker → Клиенты (broadcast)
+5. Session API → Board Service (sync, optional validate)
 
-Подпись сценария: «MoveTokenCommand → SessionEvent → Redis → Realtime Worker → WebSocket».
+Подпись сценария: «MoveTokenCommand → SessionEvent → Redis → Session Realtime Worker → WebSocket».
 ```
 
 ## PlantUML (готовая реализация)
@@ -50,13 +50,13 @@ rectangle "API Gateway" as GW {
   rectangle " " as ep3
 }
 
-rectangle "Auth & Character\nServices" as Other
+rectangle "Identity & Character\nServices" as Other
 
 together {
   rectangle "Session Process" as SP #white;line:dashed;text:[Session Process] {
-    rectangle "Session Service" as Session
+    rectangle "Session API" as Session
     rectangle "Broker\n[Redis Streams]" as Broker
-    rectangle "Realtime Worker" as Worker
+    rectangle "Session Realtime\nWorker" as Worker
     rectangle "Board Service" as Board
   }
 }

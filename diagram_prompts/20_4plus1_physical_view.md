@@ -22,7 +22,8 @@
 Оба → Gateway Node (HTTPS / WebSocket)
 
 Gateway Node → K8s Nodes (стопка из 3 квадратов, подпись «Services & Worker»):
-  Pods: Frontend, API Gateway, auth-accounts, session, board, characters, dice, realtime-worker
+  Pods: Frontend, API Gateway, identity, session, board, characters, dice, administration
+  Note: всего 6 backend-сервисов; realtime-worker входит в pod/deployment `session`.
 
 Справа storage tier (два ряда):
 - Primary Database Server → Replica Database Server (PostgreSQL)
@@ -48,10 +49,12 @@ node "K8s Nodes\n(Services & Worker)" as K8s {
   node "Pods" as Pods {
     artifact "Frontend"
     artifact "API Gateway"
+    artifact "identity"
     artifact "session"
     artifact "board"
-    artifact "realtime-worker"
-    artifact "auth-accounts"
+    artifact "characters"
+    artifact "dice"
+    artifact "administration"
   }
 }
 
@@ -72,8 +75,9 @@ K8s --> K8s : inter-service\nHTTP / Redis
 note right of K8s
   docker-compose.yml /
   Kubernetes horizontal
-  scaling: session, board,
-  realtime-worker
+  scaling: session, board;
+  6 backend services;
+  realtime-worker inside session
 end note
 @enduml
 ```
